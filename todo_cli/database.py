@@ -61,13 +61,13 @@ class TodoDatabase:
                 query += " AND completed = ?"
                 params.append(1 if completed else 0)
             
-            query += " ORDER BY completed ASC, 
-                    CASE priority 
-                        WHEN 'high' THEN 1 
-                        WHEN 'medium' THEN 2 
-                        WHEN 'low' THEN 3 
-                    END, 
-                    due_date ASC"
+            query += """ ORDER BY completed ASC,
+                    CASE priority
+                        WHEN 'high' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'low' THEN 3
+                    END,
+                    due_date ASC"""
             
             rows = conn.execute(query, params).fetchall()
             return [dict(row) for row in rows]

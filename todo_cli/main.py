@@ -211,5 +211,21 @@ def stats():
         console.print(f"\n📊 完成率: {rate:.1f}%")
 
 
+@cli.command()
+@click.option("--host", "-h", default="0.0.0.0", help="服务器地址")
+@click.option("--port", "-p", default=5000, help="服务器端口")
+@click.option("--debug", is_flag=True, help="调试模式")
+def web(host: str, port: int, debug: bool):
+    """启动 Web UI 界面"""
+    from .web.app import run_web_server
+    
+    print_info(f"启动 Web 服务器...")
+    console.print(f"   地址: http://{host}:{port}")
+    console.print(f"   模式: {'调试' if debug else '生产'}")
+    console.print("\n[cyan]按 Ctrl+C 停止服务器[/cyan]\n")
+    
+    run_web_server(host=host, port=port, debug=debug)
+
+
 if __name__ == "__main__":
     cli()

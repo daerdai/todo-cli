@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📝 Todo Web - 任务管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+        }
+        
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .stat-card .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .add-task {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .add-task h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        input, select {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        select {
+            min-width: 100px;
+        }
+        
+        input[type="date"] {
+            min-width: 150px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .filters {
+            background: white;
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .task-list {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+            border-radius: 10px;
+        }
+        
+        .task-item:hover {
+            background: #f8f9ff;
+        }
+        
+        .task-item.completed {
+            opacity: 0.6;
+        }
+        
+        .task-item.completed .task-content {
+            text-decoration: line-through;
+            color: #999;
+        }
+        
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            margin-right: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .checkbox:hover {
+            background: #f0f0ff;
+        }
+        
+        .checkbox.checked {
+            background: #667eea;
+        }
+        
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-content {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .task-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .priority {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .priority.high {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .priority.medium {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .priority.low {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .tag {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        .due-date {
+            color: #999;
+        }
+        
+        .due-date.overdue {
+            color: #c62828;
+            font-weight: bold;
+        }
+        
+        .delete-btn {
+            padding: 8px 15px;
+            background: #ffebee;
+            color: #c62828;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .task-item:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .delete-btn:hover {
+            background: #c62828;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            input, select, button {
+                width: 100%;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Todo Web</h1>
+            <p>简洁优雅的任务管理</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="number" id="total-count">0</div>
+                <div class="label">总任务</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="pending-count">0</div>
+                <div class="label">待办</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="completed-count">0</div>
+                <div class="label">已完成</div>
+            </div>
+        </div>
+        
+        <div class="add-task">
+            <h2>✨ 添加新任务</h2>
+            <div class="form-row">
+                <input type="text" id="task-input" placeholder="输入任务内容..." />
+                <select id="priority-select">
+                    <option value="medium">🟡 中等</option>
+                    <option value="high">🔴 高</option>
+                    <option value="low">🟢 低</option>
+                </select>
+                <input type="date" id="due-date" />
+                <input type="text" id="tag-input" placeholder="标签（可选）" />
+                <button onclick="addTask()">添加</button>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <span>筛选：</span>
+            <button class="filter-btn active" onclick="filterTasks('all')">全部</button>
+            <button class="filter-btn" onclick="filterTasks('pending')">待办</button>
+            <button class="filter-btn" onclick="filterTasks('completed')">已完成</button>
+            <span id="tag-filters"></span>
+        </div>
+        
+        <div class="task-list" id="task-list">
+            <div class="empty-state">
+                <div class="icon">📝</div>
+                <p>暂无任务，添加一个吧！</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentFilter = 'all';
+        let currentTag = null;
+        
+        // 页面加载时获取数据
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTasks();
+            loadStats();
+        });
+        
+        // 回车添加任务
+        document.getElementById('task-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+        
+        async function loadTasks() {
+            try {
+                let url = '/api/todos';
+                if (currentFilter === 'pending') {
+                    url += '?completed=false';
+                } else if (currentFilter === 'completed') {
+                    url += '?completed=true';
+                }
+                if (currentTag) {
+                    url += (url.includes('?') ? '&' : '?') + 'tag=' + encodeURIComponent(currentTag);
+                }
+                
+                const response = await fetch(url);
+                const tasks = await response.json();
+                renderTasks(tasks);
+            } catch (error) {
+                console.error('加载任务失败:', error);
+            }
+        }
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                document.getElementById('total-count').textContent = stats.total;
+                document.getElementById('pending-count').textContent = stats.pending;
+                document.getElementById('completed-count').textContent = stats.completed;
+                
+                // 渲染标签筛选器
+                renderTagFilters(stats.tags);
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+        
+        function renderTagFilters(tags) {
+            const container = document.getElementById('tag-filters');
+            if (!tags || tags.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = ' | 标签: ' + tags.map(tag => 
+                `<button class="filter-btn ${currentTag === tag ? 'active' : ''}" onclick="filterByTag('${tag}')">🏷️ ${tag}</button>`
+            ).join('');
+        }
+        
+        function renderTasks(tasks) {
+            const container = document.getElementById('task-list');
+            
+            if (tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📝</div>
+                        <p>暂无任务，添加一个吧！</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = tasks.map(task => {
+                const isOverdue = task.due_date && !task.completed && new Date(task.due_date) < new Date();
+                return `
+                    <div class="task-item ${task.completed ? 'completed' : ''}">
+                        <div class="checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${task.id}, ${task.completed})"></div>
+                        <div class="task-info">
+                            <div class="task-content">${escapeHtml(task.content)}</div>
+                            <div class="task-meta">
+                                <span class="priority ${task.priority}">${getPriorityText(task.priority)}</span>
+                                ${task.tag ? `<span class="tag">🏷️ ${escapeHtml(task.tag)}</span>` : ''}
+                                ${task.due_date ? `<span class="due-date ${isOverdue ? 'overdue' : ''}">📅 ${task.due_date} ${isOverdue ? '(已过期)' : ''}</span>` : ''}
+                            </div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTask(${task.id})">删除</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function getPriorityText(priority) {
+            const map = { high: '高', medium: '中', low: '低' };
+            return map[priority] || priority;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function addTask() {
+            const content = document.getElementById('task-input').value.trim();
+            const priority = document.getElementById('priority-select').value;
+            const dueDate = document.getElementById('due-date').value;
+            const tag = document.getElementById('tag-input').value.trim();
+            
+            if (!content) {
+                alert('请输入任务内容');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/todos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, priority, due_date: dueDate || null, tag: tag || null })
+                });
+                
+                if (response.ok) {
+                    // 清空输入
+                    document.getElementById('task-input').value = '';
+                    document.getElementById('due-date').value = '';
+                    document.getElementById('tag-input').value = '';
+                    
+                    // 刷新列表
+                    loadTasks();
+                    loadStats();
+                }
+            } catch (error) {
+                console.error('添加任务失败:', error);
+                alert('添加失败，请重试');
+            }
+        }
+        
+        async function toggleTask(id, completed) {
+            try {
+                const url = completed ? `/api/todos/${id}/undo` : `/api/todos/${id}/complete`;
+                const response = await fetch(url, { method: 'POST' });
+                
+                if (response.ok) {
+                    loadTasks();
+                    loadStats();
+                }
+            } catch (error) {
+                console.error('更新任务失败:', error);
+            }
+        }
+        
+        async function deleteTask(id) {
+            if (!confirm('确定要删除这个任务吗？')) return;
+            
+            try {
+                const response = await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+                
+                if (response.ok) {
+                    loadTasks();
+                    loadStats();
+                }
+            } catch (error) {
+                console.error('删除任务失败:', error);
+            }
+        }
+        
+        function filterTasks(filter) {
+            currentFilter = filter;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.filters .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            loadTasks();
+        }
+        
+        function filterByTag(tag) {
+            currentTag = currentTag === tag ? null : tag;
+            loadTasks();
+            loadStats(); // 刷新标签按钮状态
+        }
+    </script>
+</body>
+</html>
