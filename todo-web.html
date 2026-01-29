@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📝 Todo Web - 任务管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; color: white; margin-bottom: 30px; }
+        header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+        }
+        .stat-card .number { font-size: 2rem; font-weight: bold; }
+        .add-task {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        input, select {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        input[type="text"] { flex: 1; min-width: 200px; }
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .filters {
+            background: white;
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .task-list {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+            border-radius: 10px;
+        }
+        .task-item:hover { background: #f8f9ff; }
+        .task-item.completed { opacity: 0.6; }
+        .task-item.completed .task-content {
+            text-decoration: line-through;
+            color: #999;
+        }
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            margin-right: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .checkbox.checked { background: #667eea; }
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+        .task-info { flex: 1; }
+        .task-content { font-size: 1.1rem; color: #333; margin-bottom: 5px; }
+        .task-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .priority {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .priority.high { background: #ffebee; color: #c62828; }
+        .priority.medium { background: #fff3e0; color: #ef6c00; }
+        .priority.low { background: #e8f5e9; color: #2e7d32; }
+        .tag { background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 10px; }
+        .due-date.overdue { color: #c62828; font-weight: bold; }
+        .delete-btn {
+            padding: 8px 15px;
+            background: #ffebee;
+            color: #c62828;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .task-item:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { background: #c62828; color: white; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state .icon { font-size: 4rem; margin-bottom: 15px; }
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; }
+            input, select, button { width: 100%; }
+            .stats { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Todo Web</h1>
+            <p>简洁优雅的任务管理</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="number" id="total-count">0</div>
+                <div class="label">总任务</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="pending-count">0</div>
+                <div class="label">待办</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="completed-count">0</div>
+                <div class="label">已完成</div>
+            </div>
+        </div>
+        
+        <div class="add-task">
+            <h2>✨ 添加新任务</h2>
+            <div class="form-row">
+                <input type="text" id="task-input" placeholder="输入任务内容..." />
+                <select id="priority-select">
+                    <option value="medium">🟡 中等</option>
+                    <option value="high">🔴 高</option>
+                    <option value="low">🟢 低</option>
+                </select>
+                <input type="date" id="due-date" />
+                <input type="text" id="tag-input" placeholder="标签（可选）" />
+                <button onclick="addTask()">添加</button>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <span>筛选：</span>
+            <button class="filter-btn active" onclick="filterTasks('all', this)">全部</button>
+            <button class="filter-btn" onclick="filterTasks('pending', this)">待办</button>
+            <button class="filter-btn" onclick="filterTasks('completed', this)">已完成</button>
+            <span id="tag-filters"></span>
+        </div>
+        
+        <div class="task-list" id="task-list">
+            <div class="empty-state">
+                <div class="icon">📝</div>
+                <p>暂无任务，添加一个吧！</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const STORAGE_KEY = 'todo-cli-tasks';
+        let currentFilter = 'all';
+        let currentTag = null;
+        
+        function loadTasks() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        }
+        
+        function saveTasks(tasks) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        }
+        
+        function render() {
+            let tasks = loadTasks();
+            
+            // 筛选
+            if (currentFilter === 'pending') {
+                tasks = tasks.filter(t => !t.completed);
+            } else if (currentFilter === 'completed') {
+                tasks = tasks.filter(t => t.completed);
+            }
+            if (currentTag) {
+                tasks = tasks.filter(t => t.tag === currentTag);
+            }
+            
+            // 排序
+            tasks.sort((a, b) => {
+                if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                const p = { high: 1, medium: 2, low: 3 };
+                if (p[a.priority] !== p[b.priority]) return p[a.priority] - p[b.priority];
+                if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+                return b.id - a.id;
+            });
+            
+            // 统计
+            const all = loadTasks();
+            document.getElementById('total-count').textContent = all.length;
+            document.getElementById('pending-count').textContent = all.filter(t => !t.completed).length;
+            document.getElementById('completed-count').textContent = all.filter(t => t.completed).length;
+            
+            // 标签
+            const tags = [...new Set(all.map(t => t.tag).filter(Boolean))];
+            document.getElementById('tag-filters').innerHTML = tags.length ? 
+                ' | 标签: ' + tags.map(tag => 
+                    `<button class="filter-btn ${currentTag === tag ? 'active' : ''}" onclick="filterByTag('${tag}')">🏷️ ${tag}</button>`
+                ).join('') : '';
+            
+            // 渲染列表
+            const container = document.getElementById('task-list');
+            if (tasks.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>暂无任务</p></div>`;
+                return;
+            }
+            
+            container.innerHTML = tasks.map(task => {
+                const isOverdue = task.due_date && !task.completed && new Date(task.due_date) < new Date(new Date().setHours(0,0,0,0));
+                return `
+                    <div class="task-item ${task.completed ? 'completed' : ''}">
+                        <div class="checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${task.id})"></div>
+                        <div class="task-info">
+                            <div class="task-content">${escapeHtml(task.content)}</div>
+                            <div class="task-meta">
+                                <span class="priority ${task.priority}">${{high:'高',medium:'中',low:'低'}[task.priority]}</span>
+                                ${task.tag ? `<span class="tag">🏷️ ${escapeHtml(task.tag)}</span>` : ''}
+                                ${task.due_date ? `<span class="due-date ${isOverdue ? 'overdue' : ''}">📅 ${task.due_date} ${isOverdue ? '(已过期)' : ''}</span>` : ''}
+                            </div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTask(${task.id})">删除</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function addTask() {
+            const content = document.getElementById('task-input').value.trim();
+            if (!content) return alert('请输入任务内容');
+            
+            const tasks = loadTasks();
+            tasks.push({
+                id: Date.now(),
+                content,
+                priority: document.getElementById('priority-select').value,
+                due_date: document.getElementById('due-date').value || null,
+                tag: document.getElementById('tag-input').value.trim() || null,
+                completed: false,
+                created_at: new Date().toISOString()
+            });
+            saveTasks(tasks);
+            
+            // 清空输入
+            document.getElementById('task-input').value = '';
+            document.getElementById('due-date').value = '';
+            document.getElementById('tag-input').value = '';
+            
+            render();
+        }
+        
+        function toggleTask(id) {
+            const tasks = loadTasks();
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                task.completed_at = task.completed ? new Date().toISOString() : null;
+                saveTasks(tasks);
+                render();
+            }
+        }
+        
+        function deleteTask(id) {
+            if (!confirm('确定删除？')) return;
+            const tasks = loadTasks().filter(t => t.id !== id);
+            saveTasks(tasks);
+            render();
+        }
+        
+        function filterTasks(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filters .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            render();
+        }
+        
+        function filterByTag(tag) {
+            currentTag = currentTag === tag ? null : tag;
+            render();
+        }
+        
+        document.getElementById('task-input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') addTask();
+        });
+        
+        // 初始化
+        render();
+    </script>
+</body>
+</html>
